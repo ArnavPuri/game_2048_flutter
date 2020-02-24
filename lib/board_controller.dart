@@ -29,7 +29,7 @@ class BoardController {
     for (int i = 0; i < currentBoard.length; i++) {
       for (int j = 0; j < currentBoard[i].length; j++) {
         if (currentBoard[i][j] == 2048) {
-          true;
+          return true;
         }
       }
     }

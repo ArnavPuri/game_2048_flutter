@@ -31,7 +31,6 @@ class _GameGridState extends State<GameGrid> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey.shade100,
       padding: EdgeInsets.all(12),
       child: GestureDetector(
         onHorizontalDragEnd: (DragEndDetails dragDetails) {
@@ -47,9 +46,9 @@ class _GameGridState extends State<GameGrid> {
         onVerticalDragEnd: (DragEndDetails dragDetails) {
           print('Drag end v ${dragDetails.velocity}');
           print('Drag end primary v ${dragDetails.primaryVelocity}');
-          if (dragDetails.primaryVelocity < 0) {
+          if (dragDetails.primaryVelocity > 0) {
             boardController.downSlideBoard();
-          } else if (dragDetails.primaryVelocity > 0) {
+          } else if (dragDetails.primaryVelocity < 0) {
             boardController.upSlideBoard();
           }
           setState(() {});
@@ -63,12 +62,11 @@ class _GameGridState extends State<GameGrid> {
                 height: 24,
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
-                  RaisedButton(
-                    child: Icon(
+                  IconButton(
+                    icon: Icon(
                       Icons.chevron_left,
-                      color: Colors.white,
                     ),
                     color: Colors.blue,
                     splashColor: Colors.blue,
@@ -77,10 +75,9 @@ class _GameGridState extends State<GameGrid> {
                       setState(() {});
                     },
                   ),
-                  RaisedButton(
-                    child: Icon(
+                  IconButton(
+                    icon: Icon(
                       Icons.keyboard_arrow_up,
-                      color: Colors.white,
                     ),
                     color: Colors.blue,
                     splashColor: Colors.blue,
@@ -89,10 +86,9 @@ class _GameGridState extends State<GameGrid> {
                       setState(() {});
                     },
                   ),
-                  RaisedButton(
-                    child: Icon(
+                  IconButton(
+                    icon: Icon(
                       Icons.keyboard_arrow_down,
-                      color: Colors.white,
                     ),
                     color: Colors.blue,
                     splashColor: Colors.blue,
@@ -101,10 +97,9 @@ class _GameGridState extends State<GameGrid> {
                       setState(() {});
                     },
                   ),
-                  RaisedButton(
-                    child: Icon(
+                  IconButton(
+                    icon: Icon(
                       Icons.chevron_right,
-                      color: Colors.white,
                     ),
                     color: Colors.blue,
                     splashColor: Colors.blue,
@@ -148,15 +143,15 @@ class _GameGridState extends State<GameGrid> {
 
   Widget singleCell(int val) {
     return Container(
-      width: 80,
-      height: 80,
+      width: 60,
+      height: 60,
       decoration: BoxDecoration(
           color: colorsMap[val], borderRadius: BorderRadius.circular(12)),
       child: Center(
         child: Text(
           '$val',
           style: TextStyle(
-              fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87),
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ),
     );
