@@ -1,5 +1,7 @@
 import 'dart:math';
 
+enum MoveDirection { left, right, up, down }
+
 class BoardController {
   List<List<int>> currentBoard;
 
@@ -7,22 +9,28 @@ class BoardController {
     currentBoard = List.generate(4, (index) => List.generate(4, (index) => 0));
   }
 
-  List<List<int>> makeMove(String userMove, List<List<int>> board) {
-    switch (userMove.toLowerCase()) {
-      case 'l':
-        leftSlideBoard();
+  List<List<int>> makeMoveAndGetChanges(MoveDirection direction) {
+    var prevBoard = currentBoard;
+    getCurrentMove(direction)();
+    return getUpdatedCells(prevBoard);
+  }
+
+  Function getCurrentMove(MoveDirection direction) {
+    switch (direction) {
+      case MoveDirection.down:
+        return downSlideBoard;
         break;
-      case 'r':
-        rightSlideBoard();
+      case MoveDirection.left:
+        return leftSlideBoard;
         break;
-      case 'd':
-        downSlideBoard();
+      case MoveDirection.right:
+        return rightSlideBoard;
         break;
-      case 'u':
-        upSlideBoard();
+      case MoveDirection.up:
+        return upSlideBoard;
         break;
     }
-    throw ArgumentError('Invalid Move, try again!');
+    throw ArgumentError("Invalid move");
   }
 
   bool hasWon() {
@@ -49,8 +57,19 @@ class BoardController {
 
   void printBoard(List<List<int>> board) => board.forEach(print);
 
+  List<List<int>> getUpdatedCells(List<List<int>> prevBoard) {
+    List<List<int>> updatedCells = [];
+    for (int row = 0; row < prevBoard.length; row++) {
+      for (int col = 0; col < prevBoard[row].length; col++) {
+        if (currentBoard[row][col] != prevBoard[row][col] &&
+            currentBoard[row][col] != 0) updatedCells.add([row, col]);
+      }
+    }
+    return updatedCells;
+  }
+
   List<int> leftSlide(List<int> row) {
-    int orginalLength = row.length;
+    int originalLength = row.length;
     row = row.where((val) => val != 0).toList();
     for (int i = 0; i < row.length - 1; i++) {
       int firstNum = row[i];
@@ -61,7 +80,7 @@ class BoardController {
       }
     }
     row = row.where((val) => val != 0).toList();
-    int zeroesToInsert = orginalLength - row.length;
+    int zeroesToInsert = originalLength - row.length;
     row.addAll(List.generate(zeroesToInsert, (index) => 0));
     return row;
   }
@@ -101,7 +120,6 @@ class BoardController {
   }
 
   void addRandomTwo() {
-    print('Add random two called');
     List<List<int>> locationsOfZero = [];
     for (int i = 0; i < currentBoard.length; i++) {
       for (int j = 0; j < currentBoard[i].length; j++) {
@@ -115,7 +133,6 @@ class BoardController {
     }
     List<int> randomIndex =
         locationsOfZero[Random().nextInt(locationsOfZero.length)];
-    print('Random location $randomIndex');
     currentBoard[randomIndex[0]][randomIndex[1]] = 2;
   }
 }
