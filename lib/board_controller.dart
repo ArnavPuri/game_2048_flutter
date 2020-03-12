@@ -4,15 +4,16 @@ enum MoveDirection { left, right, up, down }
 
 class BoardController {
   List<List<int>> currentBoard;
+  int moves;
 
   BoardController() {
     currentBoard = List.generate(4, (index) => List.generate(4, (index) => 0));
+    moves = 0;
   }
 
-  List<List<int>> makeMoveAndGetChanges(MoveDirection direction) {
-    var prevBoard = currentBoard;
+  void makeMove(MoveDirection direction) {
     getCurrentMove(direction)();
-    return getUpdatedCells(prevBoard);
+    moves++;
   }
 
   Function getCurrentMove(MoveDirection direction) {

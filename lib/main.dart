@@ -4,7 +4,6 @@ import 'game_grid.dart';
 
 void main() => runApp(MaterialApp(
       home: GameScreen(),
-  theme: ThemeData.dark(),
     ));
 
 class GameScreen extends StatefulWidget {
