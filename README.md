@@ -2,7 +2,7 @@
 
 Classic 2048 game
 
-![Cells Animation]('screenshots/CellsSlideDemo.gif)
+![Cells Animation](screenshots/CellsSlideDemo.gif)
 
 ### Todo
 [] Game Over popup
