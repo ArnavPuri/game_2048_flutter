@@ -5,5 +5,5 @@ Classic 2048 game
 ![Cells Animation](screenshots/CellsSlideDemo.gif)
 
 ### Todo
-[] Game Over popup
-[] You win dialog
+- [ ] Game Over popup
+- [ ] You win dialog
