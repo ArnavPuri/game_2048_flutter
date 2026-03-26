@@ -43,6 +43,7 @@ class _GameGridState extends State<GameGrid>
   late final AnimationController _animController;
   MoveDirection? _swipeDirection;
   bool _hasShownWinDialog = false;
+  Offset _totalDrag = Offset.zero;
 
   @override
   void initState() {
@@ -144,16 +145,21 @@ class _GameGridState extends State<GameGrid>
         ),
         const SizedBox(height: 16),
         GestureDetector(
-          onHorizontalDragEnd: (details) {
-            final velocity = details.primaryVelocity ?? 0;
-            if (velocity == 0) return;
-            _handleMove(
-                velocity < 0 ? MoveDirection.left : MoveDirection.right);
+          onPanStart: (_) {
+            _totalDrag = Offset.zero;
           },
-          onVerticalDragEnd: (details) {
-            final velocity = details.primaryVelocity ?? 0;
-            if (velocity == 0) return;
-            _handleMove(velocity < 0 ? MoveDirection.up : MoveDirection.down);
+          onPanUpdate: (details) {
+            _totalDrag += details.delta;
+          },
+          onPanEnd: (_) {
+            if (_totalDrag.dx.abs() < 10 && _totalDrag.dy.abs() < 10) return;
+            if (_totalDrag.dx.abs() > _totalDrag.dy.abs()) {
+              _handleMove(
+                  _totalDrag.dx < 0 ? MoveDirection.left : MoveDirection.right);
+            } else {
+              _handleMove(
+                  _totalDrag.dy < 0 ? MoveDirection.up : MoveDirection.down);
+            }
           },
           child: Container(
             padding: const EdgeInsets.all(8),
