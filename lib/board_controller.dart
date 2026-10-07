@@ -2,41 +2,104 @@ import 'dart:math';
 
 enum MoveDirection { left, right, up, down }
 
+/// A board position as (row, column).
+typedef Cell = (int, int);
+
+/// Describes a single tile travelling from one cell to another during a move.
+class TileMovement {
+  const TileMovement({
+    required this.from,
+    required this.to,
+    required this.value,
+  });
+
+  final Cell from;
+  final Cell to;
+
+  /// The tile's value before any merge at [to].
+  final int value;
+}
+
 class BoardController {
-  List<List<int>> currentBoard =
-      List.generate(4, (_) => List.generate(4, (_) => 0));
+  BoardController({Random? random}) : _random = random ?? Random();
+
+  final Random _random;
+
+  List<List<int>> currentBoard = _emptyBoard();
   int moves = 0;
   int score = 0;
 
+  /// Every tile that moved (or stayed put) during the last successful move.
+  List<TileMovement> lastMovements = const [];
+
+  /// Cells that received a merged tile during the last move.
+  Set<Cell> lastMerged = const {};
+
+  /// Cells that received a freshly spawned tile since the last move/reset.
+  List<Cell> lastSpawned = [];
+
+  static List<List<int>> _emptyBoard() =>
+      List.generate(4, (_) => List.filled(4, 0));
+
   void reset() {
-    currentBoard = List.generate(4, (_) => List.generate(4, (_) => 0));
+    currentBoard = _emptyBoard();
     moves = 0;
     score = 0;
+    lastMovements = const [];
+    lastMerged = const {};
+    lastSpawned = [];
     addRandomTile();
     addRandomTile();
   }
 
   bool makeMove(MoveDirection direction) {
-    final previousBoard =
-        currentBoard.map((row) => List<int>.from(row)).toList();
+    final next = _emptyBoard();
+    final movements = <TileMovement>[];
+    final merged = <Cell>{};
+    var gained = 0;
+    var changed = false;
 
-    switch (direction) {
-      case MoveDirection.left:
-        _leftSlideBoard();
-      case MoveDirection.right:
-        _rightSlideBoard();
-      case MoveDirection.up:
-        _upSlideBoard();
-      case MoveDirection.down:
-        _downSlideBoard();
+    for (var line = 0; line < 4; line++) {
+      // Cells ordered starting from the edge the tiles slide towards.
+      final cells = _lineCells(direction, line);
+      final tiles = [
+        for (final cell in cells)
+          if (_valueAt(cell) != 0) cell,
+      ];
+
+      var target = 0;
+      for (var i = 0; i < tiles.length; i++) {
+        final from = tiles[i];
+        final value = _valueAt(from);
+        final to = cells[target++];
+
+        if (i + 1 < tiles.length && _valueAt(tiles[i + 1]) == value) {
+          movements
+            ..add(TileMovement(from: from, to: to, value: value))
+            ..add(TileMovement(from: tiles[i + 1], to: to, value: value));
+          next[to.$1][to.$2] = value * 2;
+          gained += value * 2;
+          merged.add(to);
+          changed = true;
+          i++;
+        } else {
+          movements.add(TileMovement(from: from, to: to, value: value));
+          next[to.$1][to.$2] = value;
+          if (from != to) changed = true;
+        }
+      }
     }
 
-    final boardChanged = !_boardsEqual(previousBoard, currentBoard);
-    if (boardChanged) {
-      addRandomTile();
-      moves++;
-    }
-    return boardChanged;
+    if (!changed) return false;
+
+    currentBoard = next;
+    score += gained;
+    moves++;
+    lastMovements = movements;
+    lastMerged = merged;
+    lastSpawned = [];
+    addRandomTile();
+    return true;
   }
 
   bool hasWon() {
@@ -63,69 +126,30 @@ class BoardController {
     return true;
   }
 
-  List<int> _leftSlide(List<int> row) {
-    final filtered = row.where((val) => val != 0).toList();
-    for (int i = 0; i < filtered.length - 1; i++) {
-      if (filtered[i] == filtered[i + 1]) {
-        filtered[i] *= 2;
-        score += filtered[i];
-        filtered[i + 1] = 0;
-      }
-    }
-    final result = filtered.where((val) => val != 0).toList();
-    while (result.length < 4) {
-      result.add(0);
-    }
-    return result;
-  }
-
-  List<int> _rightSlide(List<int> row) =>
-      _leftSlide(row.reversed.toList()).reversed.toList();
-
-  void _leftSlideBoard() {
-    currentBoard = currentBoard.map((row) => _leftSlide(row)).toList();
-  }
-
-  void _rightSlideBoard() {
-    currentBoard = currentBoard.map((row) => _rightSlide(row)).toList();
-  }
-
-  List<List<int>> _transposeBoard(List<List<int>> board) {
-    return List.generate(4, (i) => List.generate(4, (j) => board[j][i]));
-  }
-
-  void _upSlideBoard() {
-    currentBoard = _transposeBoard(
-        _transposeBoard(currentBoard).map((row) => _leftSlide(row)).toList());
-  }
-
-  void _downSlideBoard() {
-    currentBoard = _transposeBoard(
-        _transposeBoard(currentBoard).map((row) => _rightSlide(row)).toList());
-  }
-
   void addRandomTile() {
-    final emptyLocations = <List<int>>[];
+    final emptyLocations = <Cell>[];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
         if (currentBoard[i][j] == 0) {
-          emptyLocations.add([i, j]);
+          emptyLocations.add((i, j));
         }
       }
     }
     if (emptyLocations.isEmpty) return;
 
-    final random = Random();
-    final location = emptyLocations[random.nextInt(emptyLocations.length)];
-    currentBoard[location[0]][location[1]] = random.nextInt(10) < 9 ? 2 : 4;
+    final location = emptyLocations[_random.nextInt(emptyLocations.length)];
+    currentBoard[location.$1][location.$2] = _random.nextInt(10) < 9 ? 2 : 4;
+    lastSpawned.add(location);
   }
 
-  bool _boardsEqual(List<List<int>> a, List<List<int>> b) {
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        if (a[i][j] != b[i][j]) return false;
-      }
-    }
-    return true;
+  int _valueAt(Cell cell) => currentBoard[cell.$1][cell.$2];
+
+  List<Cell> _lineCells(MoveDirection direction, int index) {
+    return switch (direction) {
+      MoveDirection.left => [for (var c = 0; c < 4; c++) (index, c)],
+      MoveDirection.right => [for (var c = 3; c >= 0; c--) (index, c)],
+      MoveDirection.up => [for (var r = 0; r < 4; r++) (r, index)],
+      MoveDirection.down => [for (var r = 3; r >= 0; r--) (r, index)],
+    };
   }
 }

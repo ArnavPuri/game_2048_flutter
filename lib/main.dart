@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'game_grid.dart';
+import 'game_theme.dart';
+import 'widgets/hud.dart';
 
 void main() => runApp(const Game2048App());
 
@@ -13,14 +16,10 @@ class Game2048App extends StatelessWidget {
       title: '2048',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFFEDC22E),
+        colorSchemeSeed: GamePalette.gold,
+        brightness: Brightness.dark,
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFFAF8EF),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF776E65),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-        ),
+        scaffoldBackgroundColor: GamePalette.backgroundBottom,
       ),
       home: const GameScreen(),
     );
@@ -32,13 +31,18 @@ class GameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('2048'),
-      ),
-      body: const Center(
-        child: SingleChildScrollView(
-          child: GameGrid(),
+    return const AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: GameBackground(
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 32),
+                child: GameGrid(),
+              ),
+            ),
+          ),
         ),
       ),
     );

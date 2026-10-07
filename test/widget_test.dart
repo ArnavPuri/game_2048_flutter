@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_2048/board_controller.dart';
+import 'package:game_2048/main.dart';
+import 'package:game_2048/widgets/block_tile.dart';
 
 void main() {
   group('BoardController', () {
@@ -133,5 +136,80 @@ void main() {
       expect(moved, false);
       expect(controller.moves, 0);
     });
+      test('records tile movements and merges for animation', () {
+      controller.currentBoard = [
+        [2, 2, 4, 0],
+        [0, 0, 0, 8],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ];
+      controller.makeMove(MoveDirection.left);
+
+      expect(controller.currentBoard[0].sublist(0, 2), [4, 4]);
+      expect(controller.currentBoard[1][0], 8);
+      expect(controller.lastMerged, {(0, 0)});
+
+      final moves = {
+        for (final m in controller.lastMovements) m.from: (m.to, m.value),
+      };
+      expect(moves[(0, 0)], ((0, 0), 2));
+      expect(moves[(0, 1)], ((0, 0), 2));
+      expect(moves[(0, 2)], ((0, 1), 4));
+      expect(moves[(1, 3)], ((1, 0), 8));
+    });
+
+    test('records the spawned tile after a move', () {
+      controller.currentBoard = [
+        [0, 0, 0, 2],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ];
+      controller.makeMove(MoveDirection.left);
+
+      expect(controller.lastSpawned, hasLength(1));
+      final (r, c) = controller.lastSpawned.single;
+      expect(controller.currentBoard[r][c], isIn([2, 4]));
+    });
+
+    test('merges each tile at most once per move', () {
+      controller.currentBoard = [
+        [2, 2, 2, 2],
+        [4, 4, 8, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ];
+      controller.makeMove(MoveDirection.right);
+      expect(controller.currentBoard[0].sublist(2), [4, 4]);
+      expect(controller.currentBoard[1].sublist(2), [8, 8]);
+      expect(controller.score, 16);
+    });
+  });
+
+  testWidgets('game screen renders and responds to swipes', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(420, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(const Game2048App());
+    await tester.pumpAndSettle();
+
+    expect(find.text('SCORE'), findsOneWidget);
+    expect(find.text('BEST'), findsOneWidget);
+    expect(find.text('NEW GAME'), findsOneWidget);
+
+    for (final offset in const [
+      Offset(-200, 0),
+      Offset(0, -200),
+      Offset(200, 0),
+      Offset(0, 200),
+    ]) {
+      await tester.drag(find.byType(TileSocket).at(5), offset);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(find.text('NEW GAME'));
+    await tester.pumpAndSettle();
+    expect(find.text('Moves: 0'), findsOneWidget);
   });
 }
